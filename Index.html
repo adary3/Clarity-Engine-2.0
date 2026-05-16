@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Clarity Engine — KleeOnAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #04030a;
+  --bg2:   #080615;
+  --bg3:   #0d0a20;
+  --gold:  #c8a84b;
+  --gold2: #e4c870;
+  --gold3: rgba(200,168,75,0.08);
+  --purp:  #7c5ce8;
+  --purp2: #a78bfa;
+  --body:  #aca4cc;
+  --dim:   #4e4870;
+  --white: #ece6ff;
+  --red:   #f87171;
+  --green: #34d399;
+  --border:rgba(200,168,75,0.1);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+
+body {
+  background:var(--bg);
+  color:var(--body);
+  font-family:'Syne',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* ── ATMOSPHERE ── */
+.atm {
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 50% at 5% 0%,   rgba(124,92,232,0.1) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 70% at 95% 100%, rgba(200,168,75,0.08) 0%,transparent 55%),
+    radial-gradient(ellipse 40% 40% at 50% 50%,  rgba(124,92,232,0.04) 0%,transparent 70%);
+}
+
+/* ── STARS ── */
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.star{position:absolute;border-radius:50%;background:var(--gold);animation:twinkle var(--d,3s) var(--dl,0s) infinite;}
+@keyframes twinkle{0%,100%{opacity:var(--lo,.15);}50%{opacity:var(--hi,.5);}}
+
+/* ── WRAP ── */
+.wrap{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:0 24px 80px;}
+
+/* ── INTRO ── */
+.intro{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:40px 0;
+}
+
+.intro-eye{margin-bottom:32px;animation:float 6s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
+.intro-eye svg{width:72px;height:72px;filter:drop-shadow(0 0 28px rgba(200,168,75,0.5));}
+
+.intro-label{
+  font-size:9px;font-weight:700;letter-spacing:4px;text-transform:uppercase;
+  color:var(--gold);opacity:0.7;margin-bottom:16px;
+}
+
+.intro-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(42px,8vw,72px);
+  font-weight:300;
+  color:var(--white);
+  line-height:1.05;
+  margin-bottom:8px;
+  letter-spacing:-1px;
+}
+
+.intro-title em{
+  font-style:italic;color:var(--gold);
+  display:block;font-weight:300;
+}
+
+.intro-sub{
+  font-size:14px;color:var(--dim);line-height:1.75;
+  max-width:460px;margin:0 auto 40px;font-weight:400;
+}
+
+.intro-sub strong{color:var(--body);font-weight:600;}
+
+.start-btn{
+  display:inline-flex;align-items:center;gap:12px;
+  padding:16px 36px;
+  background:var(--gold);color:var(--bg);
+  border:none;border-radius:2px;
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;
+  cursor:pointer;transition:all 0.25s;
+  position:relative;overflow:hidden;
+}
+.start-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  transform:translateX(-100%);transition:transform 0.5s;
+}
+.start-btn:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(200,168,75,0.3);}
+.start-btn:hover::before{transform:translateX(100%);}
+
+.intro-note{margin-top:20px;font-size:10px;color:var(--dim);letter-spacing:1px;}
+
+/* ── DIVIDER ── */
+.div{height:1px;background:var(--border);margin:40px 0;}
+
+/* ── PROGRESS ── */
+.progress-wrap{
+  position:sticky;top:0;z-index:50;
+  padding:16px 0;
+  background:rgba(4,3,10,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  margin-bottom:48px;
+  display:none;
+}
+
+.progress-inner{display:flex;align-items:center;gap:16px;}
+
+.progress-label{
+  font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--gold);opacity:0.7;white-space:nowrap;flex-shrink:0;
+}
+
+.progress-bar{
+  flex:1;height:2px;background:rgba(200,168,75,0.12);border-radius:2px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;background:var(--gold);border-radius:2px;
+  transition:width 0.4s cubic-bezier(0.4,0,0.2,1);width:0%;
+}
+
+.progress-count{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--dim);white-space:nowrap;flex-shrink:0;
+}
+
+/* ── SECTIONS ── */
+.section-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:32px;font-weight:300;color:var(--white);
+  margin-bottom:6px;line-height:1.2;letter-spacing:-0.5px;
+}
+.section-title em{font-style:italic;color:var(--gold);}
+
+.section-desc{font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:28px;}
+
+/* ── QUESTION CARDS ── */
+.q-block{
+  margin-bottom:28px;
+  animation:qIn 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes qIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+.q-label{
+  font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--purp2);opacity:0.7;margin-bottom:10px;display:block;
+}
+
+.q-text{
+  font-family:'Cormorant Garamond',serif;
+  font-size:20px;font-weight:400;color:var(--white);
+  line-height:1.4;margin-bottom:14px;letter-spacing:-0.2px;
+}
+
+.q-hint{font-size:11px;color:var(--dim);margin-bottom:12px;line-height:1.6;font-style:italic;}
+
+.q-input{
+  width:100%;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:2px;
+  padding:16px 18px;
+  color:var(--white);
+  font-family:'Syne',sans-serif;font-size:14px;line-height:1.7;
+  outline:none;resize:none;
+  transition:border-color 0.2s,background 0.2s;
+  min-height:100px;
+}
+.q-input::placeholder{color:var(--dim);}
+.q-input:focus{border-color:rgba(200,168,75,0.3);background:var(--bg3);}
+.q-input.filled{border-color:rgba(200,168,75,0.2);}
+
+.char-hint{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--dim);
+  text-align:right;margin-top:6px;
+}
+
+/* ── SECTION DIVIDER ── */
+.sec-div{
+  display:flex;align-items:center;gap:16px;
+  margin:48px 0 40px;
+}
+.sec-div-line{flex:1;height:1px;background:var(--border);}
+.sec-div-icon{font-size:18px;color:var(--gold);opacity:0.5;flex-shrink:0;}
+
+/* ── SUBMIT ── */
+.submit-area{
+  display:none;
+  flex-direction:column;align-items:center;
+  text-align:center;padding:48px 0;
+}
+
+.submit-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:36px;font-weight:300;color:var(--white);
+  margin-bottom:8px;letter-spacing:-0.5px;
+}
+.submit-title em{font-style:italic;color:var(--gold);}
+
+.submit-desc{font-size:13px;color:var(--dim);line-height:1.7;max-width:400px;margin:0 auto 32px;}
+
+.submit-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 40px;
+  background:var(--gold);color:var(--bg);
+  border:none;border-radius:2px;
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;
+  cursor:pointer;transition:all 0.25s;
+  margin-bottom:12px;
+}
+.submit-btn:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(200,168,75,0.3);}
+.submit-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+
+.submit-note{font-size:10px;color:var(--dim);letter-spacing:1px;}
+
+/* ── REPORT ── */
+#report{display:none;}
+
+.report-header{
+  text-align:center;
+  padding:48px 0 32px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:40px;
+}
+
+.report-badge{
+  display:inline-block;
+  font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold);border:1px solid var(--border);
+  padding:5px 14px;border-radius:20px;margin-bottom:20px;
+}
+
+.report-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:36px;font-weight:300;color:var(--white);
+  margin-bottom:6px;letter-spacing:-0.5px;
+}
+
+.report-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:22px;font-weight:600;font-style:italic;
+  color:var(--gold);margin-bottom:8px;
+}
+
+.report-date{font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
+
+/* Report sections */
+.r-section{margin-bottom:36px;}
+
+.r-section-head{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:16px;padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+
+.r-section-num{
+  font-family:'Cormorant Garamond',serif;
+  font-size:24px;font-weight:300;color:var(--gold);opacity:0.5;
+  line-height:1;flex-shrink:0;
+}
+
+.r-section-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:18px;font-weight:600;color:var(--white);
+  letter-spacing:-0.2px;
+}
+
+.r-item{
+  margin-bottom:14px;
+  padding:14px 16px;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-left:3px solid var(--gold);
+  border-radius:0;
+}
+
+.r-item-q{
+  font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--gold);opacity:0.6;margin-bottom:7px;
+}
+
+.r-item-a{
+  font-family:'Cormorant Garamond',serif;
+  font-size:16px;color:var(--white);line-height:1.65;
+  font-weight:400;
+}
+
+/* Synthesis blocks */
+.synthesis{
+  background:var(--bg3);
+  border:1px solid rgba(200,168,75,0.15);
+  padding:20px;
+  margin-bottom:36px;
+}
+
+.synthesis-label{
+  font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:12px;display:block;
+}
+
+.synthesis-text{
+  font-family:'Cormorant Garamond',serif;
+  font-size:17px;color:var(--white);line-height:1.75;
+  font-weight:300;font-style:italic;
+}
+
+/* Download btn */
+.dl-area{
+  text-align:center;padding:32px 0;
+  border-top:1px solid var(--border);
+  margin-top:40px;
+}
+
+.dl-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 32px;
+  background:transparent;color:var(--gold);
+  border:1px solid var(--gold);border-radius:2px;
+  font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;
+  cursor:pointer;transition:all 0.2s;margin:0 6px 10px;
+}
+.dl-btn:hover{background:var(--gold3);}
+
+.restart-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 32px;
+  background:transparent;color:var(--dim);
+  border:1px solid rgba(255,255,255,0.08);border-radius:2px;
+  font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;
+  cursor:pointer;transition:all 0.2s;margin:0 6px 10px;
+}
+.restart-btn:hover{color:var(--body);border-color:rgba(255,255,255,0.15);}
+
+.brand-footer{
+  text-align:center;
+  padding:24px 0;
+  font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(200,168,75,0.15);border-radius:2px;}
+
+/* ── API SELECTOR ── */
+.api-selector{
+  margin-bottom:24px;
+  background:var(--bg2);border:1px solid var(--border);
+  padding:18px;
+}
+.api-selector-title{
+  font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--gold);opacity:0.7;margin-bottom:14px;display:block;
+}
+.api-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.api-opt{
+  padding:12px 14px;
+  border:1px solid var(--border);
+  cursor:pointer;transition:all 0.18s;
+  position:relative;
+}
+.api-opt:hover{border-color:rgba(200,168,75,0.25);background:var(--bg3);}
+.api-opt.selected{border-color:var(--gold);background:var(--gold3);}
+.api-opt-name{font-size:12px;font-weight:700;color:var(--white);margin-bottom:3px;}
+.api-opt-desc{font-size:10px;color:var(--dim);line-height:1.4;}
+.api-opt-badge{
+  display:inline-block;font-size:8px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  padding:2px 7px;margin-bottom:6px;
+}
+.badge-free{background:rgba(52,211,153,0.12);color:var(--green);border:1px solid rgba(52,211,153,0.2);}
+.badge-premium{background:rgba(200,168,75,0.1);color:var(--gold);border:1px solid var(--border);}
+
+.api-key-field{
+  margin-top:12px;
+  display:none;
+}
+.api-key-field.visible{display:block;}
+.api-key-input{
+  width:100%;
+  background:var(--bg3);border:1px solid var(--border);
+  padding:10px 14px;
+  color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;
+  outline:none;transition:border-color 0.2s;
+  letter-spacing:1px;
+}
+.api-key-input:focus{border-color:rgba(200,168,75,0.3);}
+.api-key-input::placeholder{color:var(--dim);letter-spacing:0;}
+.api-key-hint{font-size:9px;color:var(--dim);margin-top:6px;line-height:1.5;}
+.api-key-hint a{color:var(--gold);text-decoration:none;}
+.api-key-hint a:hover{text-decoration:underline;}
+
+/* ── EXPERT SYNTHESIS ── */
+.expert-wrap{
+  margin-bottom:36px;
+  border:1px solid rgba(200,168,75,0.25);
+  background:var(--bg2);
+  overflow:hidden;
+}
+
+.expert-head{
+  padding:16px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;
+  background:rgba(200,168,75,0.04);
+}
+
+.expert-avatar{
+  width:42px;height:42px;
+  border:1px solid var(--border);
+  background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+
+.expert-meta{flex:1;}
+.expert-name{font-size:13px;font-weight:700;color:var(--white);margin-bottom:2px;}
+.expert-title{font-size:10px;color:var(--gold);opacity:0.7;letter-spacing:0.5px;}
+
+.expert-powered{
+  font-size:9px;color:var(--dim);
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:1px;
+}
+
+.expert-body{padding:24px 20px;}
+
+.expert-loading{
+  display:flex;align-items:center;gap:12px;
+  padding:20px 0;font-size:12px;color:var(--dim);
+}
+
+.expert-text{
+  font-family:'Cormorant Garamond',serif;
+  font-size:18px;color:var(--white);
+  line-height:1.85;font-weight:300;
+  white-space:pre-wrap;
+}
+
+.expert-text strong{
+  color:var(--gold);font-weight:600;
+}
+
+.expert-error{
+  font-size:12px;color:var(--red);line-height:1.6;
+  padding:12px;background:rgba(248,113,113,0.05);
+  border:1px solid rgba(248,113,113,0.15);
+}
+
+.spin{width:15px;height:15px;border:2px solid rgba(200,168,75,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Mobile */
+@media(max-width:600px){
+  .wrap{padding:0 16px 60px;}
+  .intro-title{font-size:36px;}
+  .q-text{font-size:17px;}
+}
+</style>
+</head>
+<body>
+
+<div class="atm"></div>
+<div class="stars" id="stars"></div>
+
+<div class="wrap">
+
+  <!-- ── INTRO ── -->
+  <div class="intro" id="intro">
+    <div class="intro-eye">
+      <svg viewBox="0 0 72 72" fill="none">
+        <circle cx="36" cy="36" r="30" stroke="rgba(200,168,75,0.15)" stroke-width="0.5"/>
+        <circle cx="36" cy="36" r="22" stroke="rgba(200,168,75,0.1)" stroke-width="0.5"/>
+        <circle cx="36" cy="36" r="14" stroke="rgba(124,92,232,0.2)" stroke-width="0.5"/>
+        <ellipse cx="36" cy="36" rx="26" ry="13" stroke="#c8a84b" stroke-width="0.8" opacity="0.75"/>
+        <ellipse cx="36" cy="36" rx="18" ry="9" stroke="#c8a84b" stroke-width="0.4" opacity="0.3"/>
+        <circle cx="36" cy="36" r="7" fill="rgba(124,92,232,0.4)"/>
+        <circle cx="36" cy="36" r="3.5" fill="#c8a84b" opacity="0.95"/>
+        <circle cx="36" cy="36" r="1.2" fill="#04030a"/>
+        <line x1="36" y1="6" x2="36" y2="23" stroke="#c8a84b" stroke-width="0.5" opacity="0.3"/>
+        <line x1="36" y1="49" x2="36" y2="66" stroke="#c8a84b" stroke-width="0.5" opacity="0.3"/>
+        <line x1="6" y1="36" x2="23" y2="36" stroke="#c8a84b" stroke-width="0.5" opacity="0.3"/>
+        <line x1="49" y1="36" x2="66" y2="36" stroke="#c8a84b" stroke-width="0.5" opacity="0.3"/>
+        <circle cx="12" cy="12" r="1.2" fill="#c8a84b" opacity="0.4"/>
+        <circle cx="60" cy="14" r="0.8" fill="#c8a84b" opacity="0.35"/>
+        <circle cx="58" cy="58" r="1" fill="#7c5ce8" opacity="0.4"/>
+        <circle cx="10" cy="56" r="0.8" fill="#c8a84b" opacity="0.3"/>
+      </svg>
+    </div>
+
+    <div class="intro-label">KleeOnAI Presents</div>
+
+    <div class="intro-title">
+      The Clarity<br/><em>Engine</em>
+    </div>
+
+    <div class="intro-sub">
+      Most people know what they feel but can't say it clearly.<br/>
+      <strong>This changes that.</strong><br/><br/>
+      Answer honestly. The right questions do the work.<br/>
+      You'll walk away knowing yourself better than before.
+    </div>
+
+    <button class="start-btn" onclick="startEngine()">
+      Begin Your Clarity Session
+      <span>→</span>
+    </button>
+
+    <div class="intro-note">Free · No login · No data stored · ~10 minutes</div>
+  </div>
+
+  <!-- ── PROGRESS ── -->
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-inner">
+      <span class="progress-label">Clarity</span>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <span class="progress-count" id="progress-count">0 / 21</span>
+    </div>
+  </div>
+
+  <!-- ── QUESTIONS ── -->
+  <div id="questions" style="display:none;">
+
+    <!-- PART 1: WHO YOU ARE -->
+    <div class="section-title">Who <em>you are</em></div>
+    <div class="section-desc">Before anything else — let's understand the person behind the ideas. Answer honestly. There are no wrong answers here.</div>
+
+    <div class="q-block" style="animation-delay:0.05s">
+      <span class="q-label">Question 01</span>
+      <div class="q-text">What is your name, and what do people usually come to you for?</div>
+      <div class="q-hint">Think about what friends, family, or colleagues ask your help with most.</div>
+      <textarea class="q-input" id="q1" placeholder="e.g. My name is Klee. People come to me when they need to understand something complicated, or when they need someone to think clearly under pressure..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch1">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.1s">
+      <span class="q-label">Question 02</span>
+      <div class="q-text">What have you always been able to do effortlessly that others find difficult?</div>
+      <div class="q-hint">The thing that feels obvious to you but amazes people around you.</div>
+      <textarea class="q-input" id="q2" placeholder="e.g. I can always see the gap between what someone says and what they actually mean..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch2">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.15s">
+      <span class="q-label">Question 03</span>
+      <div class="q-text">What would you do every day even if nobody paid you for it?</div>
+      <div class="q-hint">Not what you should do. What you actually do when nobody is watching.</div>
+      <textarea class="q-input" id="q3" placeholder="e.g. I would read, think, and build things. I can spend hours going deep on one idea..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch3">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.2s">
+      <span class="q-label">Question 04</span>
+      <div class="q-text">What is the one experience in your life — good or hard — that shaped how you see the world?</div>
+      <div class="q-hint">This doesn't have to be dramatic. Sometimes the quietest moments change us most.</div>
+      <textarea class="q-input" id="q4" placeholder="e.g. Growing up watching my parents work hard for little return taught me that effort without direction is wasted..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch4">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.25s">
+      <span class="q-label">Question 05</span>
+      <div class="q-text">What do people consistently misunderstand about you?</div>
+      <div class="q-hint">The assumption people make that is wrong — and what the truth actually is.</div>
+      <textarea class="q-input" id="q5" placeholder="e.g. People think I'm quiet because I have nothing to say. Actually I'm processing everything..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch5">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.3s">
+      <span class="q-label">Question 06</span>
+      <div class="q-text">What kind of problems make you come alive? The ones you'd solve even when exhausted?</div>
+      <div class="q-hint">Not the problems you're supposed to care about. The ones that actually pull you in.</div>
+      <textarea class="q-input" id="q6" placeholder="e.g. Problems where things are misunderstood or poorly communicated. When I see something explained badly I have to fix it..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch6">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.35s">
+      <span class="q-label">Question 07</span>
+      <div class="q-text">What are you afraid of — about yourself, not the world?</div>
+      <div class="q-hint">The internal fear. The one you don't usually say out loud.</div>
+      <textarea class="q-input" id="q7" placeholder="e.g. That I have more potential than I'll ever fully use. That I'll always be starting things and not finishing..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch7">0 words</div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="sec-div">
+      <div class="sec-div-line"></div>
+      <div class="sec-div-icon">✦</div>
+      <div class="sec-div-line"></div>
+    </div>
+
+    <!-- PART 2: YOUR VISION -->
+    <div class="section-title">Your <em>vision</em></div>
+    <div class="section-desc">Not where you think you should be going. Where you actually want to go — when you're honest with yourself.</div>
+
+    <div class="q-block" style="animation-delay:0.05s">
+      <span class="q-label">Question 08</span>
+      <div class="q-text">If you had full permission to build anything — what would you build?</div>
+      <div class="q-hint">Remove the "buts" for a moment. What comes up first?</div>
+      <textarea class="q-input" id="q8" placeholder="e.g. I would build a platform that helps African creators monetize their knowledge without needing Western infrastructure..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch8">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.1s">
+      <span class="q-label">Question 09</span>
+      <div class="q-text">In 5 years, what does a day in your life look like?</div>
+      <div class="q-hint">Be specific. Where are you? What are you doing in the morning? Who are you with?</div>
+      <textarea class="q-input" id="q9" placeholder="e.g. I wake up somewhere quiet. I spend the morning reading and thinking. By afternoon I'm building or talking to people who are building..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch9">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.15s">
+      <span class="q-label">Question 10</span>
+      <div class="q-text">What do you want to be known for — not famous for, known for?</div>
+      <div class="q-hint">The reputation that matters to you. What do you want people to say about your work?</div>
+      <textarea class="q-input" id="q10" placeholder="e.g. That I made complex things clear. That I built things that actually helped people think better..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch10">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.2s">
+      <span class="q-label">Question 11</span>
+      <div class="q-text">Who is the one person your work is really for? Describe them in detail.</div>
+      <div class="q-hint">Not a demographic. A real person — or someone who represents your ideal audience.</div>
+      <textarea class="q-input" id="q11" placeholder="e.g. A 22 year old in Kigali who is smart and curious but keeps being told that the opportunities aren't here..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch11">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.25s">
+      <span class="q-label">Question 12</span>
+      <div class="q-text">What belief do you hold about the world that most people would disagree with?</div>
+      <div class="q-hint">Your real conviction — the one that drives your work even when others don't see it yet.</div>
+      <textarea class="q-input" id="q12" placeholder="e.g. I believe Africa is not behind. It's early. And the people who see that first will build the most important things..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch12">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.3s">
+      <span class="q-label">Question 13</span>
+      <div class="q-text">What would you regret NOT doing — if you looked back at 70?</div>
+      <div class="q-hint">The thing that pulls at you. The unlived version of yourself you sometimes think about.</div>
+      <textarea class="q-input" id="q13" placeholder="e.g. Not building something that outlasted me. Not proving — to myself first — that I was capable of more than I thought..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch13">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.35s">
+      <span class="q-label">Question 14</span>
+      <div class="q-text">What does success feel like to you — not look like, feel like?</div>
+      <div class="q-hint">Ignore money and status for a moment. What's the internal feeling of having made it?</div>
+      <textarea class="q-input" id="q14" placeholder="e.g. Calm. Like I'm exactly where I'm supposed to be. Doing work that matters to me without performing it for anyone..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch14">0 words</div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="sec-div">
+      <div class="sec-div-line"></div>
+      <div class="sec-div-icon">◈</div>
+      <div class="sec-div-line"></div>
+    </div>
+
+    <!-- PART 3: YOUR IDEA -->
+    <div class="section-title">Your <em>idea</em></div>
+    <div class="section-desc">The thing you want to build, create, or launch. Even if it's still fuzzy — especially if it's still fuzzy.</div>
+
+    <div class="q-block" style="animation-delay:0.05s">
+      <span class="q-label">Question 15</span>
+      <div class="q-text">What is the idea you keep coming back to — the one that won't leave you alone?</div>
+      <div class="q-hint">It doesn't need to be fully formed. Just say it as it is right now.</div>
+      <textarea class="q-input" id="q15" placeholder="e.g. A way for African builders to present their work to international clients without being underestimated..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch15">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.1s">
+      <span class="q-label">Question 16</span>
+      <div class="q-text">What problem does this idea solve — and who has this problem right now?</div>
+      <div class="q-hint">Not who should have the problem. Who actually does.</div>
+      <textarea class="q-input" id="q16" placeholder="e.g. African freelancers who keep getting lowballed because clients don't know how to evaluate their work..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch16">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.15s">
+      <span class="q-label">Question 17</span>
+      <div class="q-text">Why are YOU the right person to build this?</div>
+      <div class="q-hint">Not modestly. What do you bring that most people don't have?</div>
+      <textarea class="q-input" id="q17" placeholder="e.g. Because I've lived this problem. I know what it feels like from the inside. And I can communicate it clearly..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch17">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.2s">
+      <span class="q-label">Question 18</span>
+      <div class="q-text">What's the simplest version of this idea you could build or test in 30 days?</div>
+      <div class="q-hint">Strip away everything that isn't essential. What's the core?</div>
+      <textarea class="q-input" id="q18" placeholder="e.g. A one-page guide that teaches African freelancers how to position themselves for international rates..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch18">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.25s">
+      <span class="q-label">Question 19</span>
+      <div class="q-text">What would make this idea fail? Be specific — name the real risks.</div>
+      <div class="q-hint">The honest answer. Not the comfortable one.</div>
+      <textarea class="q-input" id="q19" placeholder="e.g. If I don't ship it. If I keep perfecting instead of testing. If I build for everyone instead of one person..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch19">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.3s">
+      <span class="q-label">Question 20</span>
+      <div class="q-text">What would success look like for this idea in 12 months?</div>
+      <div class="q-hint">Specific. Measurable if possible. What would make you feel this worked?</div>
+      <textarea class="q-input" id="q20" placeholder="e.g. 500 people have used it. At least 10 have told me it changed how they think about their work..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch20">0 words</div>
+    </div>
+
+    <div class="q-block" style="animation-delay:0.35s">
+      <span class="q-label">Question 21</span>
+      <div class="q-text">If this idea works — what does it open up for you? What becomes possible?</div>
+      <div class="q-hint">The real reason. Beyond the idea itself.</div>
+      <textarea class="q-input" id="q21" placeholder="e.g. It proves I can build things people need. It gives me the confidence to go bigger. It shows that my context is an advantage..." oninput="onInput(this)"></textarea>
+      <div class="char-hint" id="ch21">0 words</div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="sec-div">
+      <div class="sec-div-line"></div>
+      <div class="sec-div-icon">✦</div>
+      <div class="sec-div-line"></div>
+    </div>
+
+    <div class="submit-area" id="submit-area">
+      <div class="submit-title">You're <em>done</em></div>
+      <div class="submit-desc">Your answers are ready. Choose how you want your expert synthesis generated — then generate your Clarity Report.</div>
+
+      <div class="api-selector">
+        <span class="api-selector-title">Expert Synthesis — Choose Your Analyst</span>
+        <div class="api-options">
+          <div class="api-opt selected" id="opt-gemini" onclick="selectAPI('gemini')">
+            <div class="api-opt-badge badge-free">Free</div>
+            <div class="api-opt-name">Gemini</div>
+            <div class="api-opt-desc">Google's AI. Strong analysis. No cost. Paste your API key from aistudio.google.com</div>
+          </div>
+          <div class="api-opt" id="opt-claude" onclick="selectAPI('claude')">
+            <div class="api-opt-badge badge-premium">Premium</div>
+            <div class="api-opt-name">Claude</div>
+            <div class="api-opt-desc">Anthropic's Claude. Deepest psychological insight. Best synthesis quality.</div>
+          </div>
+        </div>
+        <div class="api-key-field visible" id="key-field">
+          <input class="api-key-input" id="api-key-input" type="password" placeholder="Paste your API key here..."/>
+          <div class="api-key-hint" id="api-key-hint">
+            Get your free Gemini key at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> → Get API Key. Takes 30 seconds.
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="buildReport()" id="submit-btn">Generate My Clarity Report →</button>
+      <div class="submit-note">Your answers never leave your device except for the final synthesis call.</div>
+    </div>
+
+  </div>
+
+  <!-- ── REPORT ── -->
+  <div id="report"></div>
+
+  <div class="brand-footer" id="brand-footer" style="display:none;">
+    KleeOnAI — "Africa doesn't catch up. It leaps."
+  </div>
+
+</div>
+
+<script>
+// ── STARS ──────────────────────────────
+(()=>{
+  const c=document.getElementById('stars');
+  for(let i=0;i<24;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=Math.random()*1.4+0.4;
+    const lo=(Math.random()*0.1+0.05).toFixed(2);
+    const hi=(Math.random()*0.3+0.2).toFixed(2);
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--dl:${Math.random()*4}s;--lo:${lo};--hi:${hi};`;
+    c.appendChild(s);
+  }
+})();
+
+// ── STATE ──────────────────────────────
+const TOTAL = 21;
+let answered = 0;
+
+// ── START ──────────────────────────────
+function startEngine(){
+  document.getElementById('intro').style.display='none';
+  document.getElementById('questions').style.display='block';
+  document.getElementById('progress-wrap').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateProgress();
+}
+
+// ── INPUT HANDLING ──────────────────────
+function onInput(el){
+  const id=el.id;
+  const num=id.replace('q','');
+  const words=el.value.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('ch'+num).textContent=words+' word'+(words===1?'':'s');
+  el.classList.toggle('filled', el.value.trim().length > 0);
+  // auto-resize
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+  updateProgress();
+  checkSubmit();
+}
+
+function updateProgress(){
+  let count=0;
+  for(let i=1;i<=TOTAL;i++){
+    const el=document.getElementById('q'+i);
+    if(el && el.value.trim().length > 10) count++;
+  }
+  answered=count;
+  const pct=(count/TOTAL*100).toFixed(0);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-count').textContent=count+' / '+TOTAL;
+}
+
+function checkSubmit(){
+  let filled=0;
+  for(let i=1;i<=TOTAL;i++){
+    const el=document.getElementById('q'+i);
+    if(el && el.value.trim().length > 5) filled++;
+  }
+  const area=document.getElementById('submit-area');
+  if(filled >= 15){
+    area.style.display='flex';
+    area.style.animation='qIn 0.5s ease both';
+  }
+}
+
+function get(id){ return (document.getElementById(id)?.value||'').trim(); }
+
+// ── API SELECTION ──────────────────────
+let selectedAPI = 'gemini';
+
+function selectAPI(api){
+  selectedAPI = api;
+  document.getElementById('opt-gemini').classList.toggle('selected', api==='gemini');
+  document.getElementById('opt-claude').classList.toggle('selected', api==='claude');
+  document.getElementById('api-key-hint').innerHTML = api==='gemini'
+    ? 'Get your free Gemini key at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> → Get API Key. Takes 30 seconds.'
+    : 'Get your Claude key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys. Add $5 credit to start.';
+}
+
+// ── BUILD REPORT ──────────────────────
+async function buildReport(){
+  const apiKey = document.getElementById('api-key-input').value.trim();
+  if(!apiKey){
+    document.getElementById('api-key-input').style.outline='2px solid var(--red)';
+    setTimeout(()=>document.getElementById('api-key-input').style.outline='',1500);
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='Generating...';
+
+  const name = get('q1').split(/[.,!?]/)[0].replace(/my name is /i,'').replace(/i am /i,'').trim().split(' ')[0] || 'You';
+  const report = document.getElementById('report');
+  const now = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  // Show report shell immediately
+  report.innerHTML = `
+    <div class="report-header">
+      <div class="report-badge">Clarity Report</div>
+      <div class="report-title">Your Clarity Report</div>
+      <div class="report-name">${capitalise(name)}</div>
+      <div class="report-date">Generated ${now}</div>
+    </div>
+
+    <!-- EXPERT SYNTHESIS — loads async -->
+    <div class="expert-wrap" id="expert-wrap">
+      <div class="expert-head">
+        <div class="expert-avatar">🧠</div>
+        <div class="expert-meta">
+          <div class="expert-name">Dr. Clarity</div>
+          <div class="expert-title">Psychologist · Strategist · Advisor</div>
+        </div>
+        <div class="expert-powered" id="expert-powered">Powered by ${selectedAPI==='claude'?'Claude':'Gemini'}</div>
+      </div>
+      <div class="expert-body">
+        <div class="expert-loading" id="expert-loading">
+          <div class="spin"></div>
+          <span id="expert-load-msg">Reading your answers deeply...</span>
+        </div>
+        <div class="expert-text" id="expert-text" style="display:none;"></div>
+        <div class="expert-error" id="expert-error" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- IDENTITY -->
+    <div class="r-section">
+      <div class="r-section-head">
+        <div class="r-section-num">01</div>
+        <div class="r-section-title">Who You Are</div>
+      </div>
+      ${rItem('What people come to you for', get('q1'))}
+      ${rItem('Your effortless strength', get('q2'))}
+      ${rItem('What you do without being paid', get('q3'))}
+      ${rItem('The experience that shaped you', get('q4'))}
+      ${rItem('What people misunderstand about you', get('q5'))}
+      ${rItem('The problems that make you come alive', get('q6'))}
+      ${rItem('Your internal fear', get('q7'))}
+    </div>
+
+    <!-- VISION -->
+    <div class="r-section">
+      <div class="r-section-head">
+        <div class="r-section-num">02</div>
+        <div class="r-section-title">Your Vision</div>
+      </div>
+      ${rItem('What you would build with full permission', get('q8'))}
+      ${rItem('Your life in 5 years', get('q9'))}
+      ${rItem('What you want to be known for', get('q10'))}
+      ${rItem('Who your work is for', get('q11'))}
+      ${rItem('Your core belief about the world', get('q12'))}
+      ${rItem('What you would regret not doing', get('q13'))}
+      ${rItem('What success feels like to you', get('q14'))}
+    </div>
+
+    <!-- IDEA -->
+    <div class="r-section">
+      <div class="r-section-head">
+        <div class="r-section-num">03</div>
+        <div class="r-section-title">Your Idea</div>
+      </div>
+      ${rItem('The idea that won\'t leave you alone', get('q15'))}
+      ${rItem('The problem it solves and who has it', get('q16'))}
+      ${rItem('Why you are the right person to build it', get('q17'))}
+      ${rItem('The simplest version in 30 days', get('q18'))}
+      ${rItem('What could make it fail', get('q19'))}
+      ${rItem('Success in 12 months', get('q20'))}
+      ${rItem('What this opens up for you', get('q21'))}
+    </div>
+
+    <!-- DOWNLOAD -->
+    <div class="dl-area">
+      <div style="margin-bottom:16px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--dim);font-style:italic;">
+        "The clearest view of yourself you've written down."
+      </div>
+      <button class="dl-btn" onclick="downloadReport()">↓ Download as Text</button>
+      <button class="restart-btn" onclick="location.reload()">↺ Start Again</button>
+    </div>
+  `;
+
+  document.getElementById('questions').style.display='none';
+  document.getElementById('progress-wrap').style.display='none';
+  report.style.display='block';
+  document.getElementById('brand-footer').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  // Stream expert synthesis
+  await generateExpertSynthesis(apiKey, name);
+  btn.disabled=false; btn.textContent='Generate My Clarity Report →';
+}
+
+// ── EXPERT SYNTHESIS ──────────────────
+function buildExpertPrompt(name){
+  const answers = [
+    ['What people come to you for', get('q1')],
+    ['Effortless strength', get('q2')],
+    ['What they do without pay', get('q3')],
+    ['The shaping experience', get('q4')],
+    ['What people misunderstand', get('q5')],
+    ['Problems that make them come alive', get('q6')],
+    ['Internal fear', get('q7')],
+    ['What they would build with permission', get('q8')],
+    ['Life in 5 years', get('q9')],
+    ['What they want to be known for', get('q10')],
+    ['Who their work is for', get('q11')],
+    ['Core belief about the world', get('q12')],
+    ['What they would regret not doing', get('q13')],
+    ['What success feels like', get('q14')],
+    ['The idea that won\'t leave them', get('q15')],
+    ['The problem it solves', get('q16')],
+    ['Why they are the right person', get('q17')],
+    ['Simplest version in 30 days', get('q18')],
+    ['What could make it fail', get('q19')],
+    ['Success in 12 months', get('q20')],
+    ['What this opens up', get('q21')],
+  ].filter(([,v])=>v).map(([q,v])=>`${q}:\n${v}`).join('\n\n');
+
+  return `You are Dr. Clarity — a world-class psychologist, strategist, and human potential advisor. You have just read the most honest answers a person has ever written about themselves.
+
+Your job: write a deep, precise, and personal synthesis of who this person is, what drives them, and what they should do next. This is NOT a generic summary. It reads like a brilliant advisor who has spent hours with this person and sees them clearly — sometimes more clearly than they see themselves.
+
+Write in second person ("You are...", "What drives you..."). Be specific — reference their actual answers. Be honest — name patterns they may not have seen. Be encouraging — but never vague or motivational-poster.
+
+Structure your response in 4 parts, each separated by a blank line:
+
+1. WHO YOU ARE (2-3 paragraphs): The pattern of their identity. Their deepest strength. What their fear reveals about their ambition.
+
+2. WHAT DRIVES YOU (1-2 paragraphs): The real motivation beneath the surface. What they are actually optimizing for — even if they haven't named it.
+
+3. YOUR IDEA, ASSESSED (1-2 paragraphs): An honest read of their idea. What's strong about it. What's the real risk. The one thing they must do first.
+
+4. ONE THING TO REMEMBER (1 paragraph, italic): A single insight that cuts through everything. The thing they should read when they lose clarity.
+
+Person's name: ${capitalise(name)}
+
+Their answers:
+${answers}
+
+Write with depth, warmth, and precision. No filler. No generic advice. Speak directly to who this specific person actually is.`;
+}
+
+async function generateExpertSynthesis(apiKey, name){
+  const prompt = buildExpertPrompt(name);
+  const loadMsg = document.getElementById('expert-load-msg');
+  const msgs = ['Reading your answers deeply...','Finding the patterns...','Synthesizing your profile...','Writing your analysis...'];
+  let mi=0;
+  const iv = setInterval(()=>{ loadMsg.textContent=msgs[++mi%msgs.length]; },2000);
+
+  try{
+    let text='';
+    if(selectedAPI==='claude'){
+      text = await callClaude(apiKey, prompt);
+    } else {
+      text = await callGemini(apiKey, prompt);
+    }
+
+    clearInterval(iv);
+    document.getElementById('expert-loading').style.display='none';
+    const el = document.getElementById('expert-text');
+    el.style.display='block';
+    // Type out the text
+    await typeText(el, text);
+
+  } catch(e){
+    clearInterval(iv);
+    document.getElementById('expert-loading').style.display='none';
+    const err = document.getElementById('expert-error');
+    err.style.display='block';
+    err.textContent='Could not generate expert synthesis: '+e.message+'. Your answers are still saved below. Check your API key and try again by reloading.';
+  }
+}
+
+async function callClaude(apiKey, prompt){
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version':'2023-06-01'
+    },
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1500,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if(!res.ok){
+    const e=await res.json();
+    throw new Error(e.error?.message||'Claude API error');
+  }
+  const data=await res.json();
+  return data.content?.map(b=>b.text||'').join('')||'';
+}
+
+async function callGemini(apiKey, prompt){
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      contents:[{parts:[{text:prompt}]}],
+      generationConfig:{maxOutputTokens:1500,temperature:0.8}
+    })
+  });
+  if(!res.ok){
+    const e=await res.json();
+    throw new Error(e.error?.message||'Gemini API error');
+  }
+  const data=await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+
+// Typewriter effect
+async function typeText(el, text){
+  // Format the text with bold for section headers
+  const formatted = text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/_(.*?)_/g,'<em>$1</em>');
+
+  el.innerHTML='';
+  const div=document.createElement('div');
+  el.appendChild(div);
+
+  // Split into chunks for smooth rendering
+  const chunks=formatted.split(/(<[^>]+>|[^<]+)/g).filter(Boolean);
+  let html='';
+  for(const chunk of chunks){
+    html+=chunk;
+    div.innerHTML=html;
+    if(!chunk.startsWith('<')){
+      await new Promise(r=>setTimeout(r,8));
+    }
+  }
+}
+
+function truncate(str, n){
+  if(!str) return '';
+  const clean = str.replace(/\n/g,' ').trim();
+  return clean.length > n ? clean.substring(0,n).trim()+'...' : clean;
+}
+
+function capitalise(s){ return s.charAt(0).toUpperCase()+s.slice(1).toLowerCase(); }
+function escH(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+function rItem(q, a){
+  if(!a) return '';
+  return `<div class="r-item"><div class="r-item-q">${q}</div><div class="r-item-a">${escH(a)}</div></div>`;
+}
+
+// ── DOWNLOAD ──────────────────────────
+function downloadReport(){
+  const name = get('q1').split(/[.,!?]/)[0].replace(/my name is /i,'').split(' ')[0] || 'me';
+  const now  = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const line = '═'.repeat(60);
+  const div  = '─'.repeat(60);
+
+  let txt = `CLARITY REPORT\n${line}\n`;
+  txt += `Name: ${capitalise(name)}\nGenerated: ${now}\n`;
+  txt += `KleeOnAI — "Africa doesn't catch up. It leaps."\n${line}\n\n`;
+
+  txt += `PART 1 — WHO YOU ARE\n${div}\n\n`;
+  const q1s = [['What people come to you for','q1'],['Your effortless strength','q2'],['What you do without being paid','q3'],['The experience that shaped you','q4'],['What people misunderstand about you','q5'],['Problems that make you come alive','q6'],['Your internal fear','q7']];
+  q1s.forEach(([label,id])=>{ const v=get(id); if(v) txt+=`${label}:\n${v}\n\n`; });
+
+  txt += `\nPART 2 — YOUR VISION\n${div}\n\n`;
+  const q2s = [['What you would build with full permission','q8'],['Your life in 5 years','q9'],['What you want to be known for','q10'],['Who your work is for','q11'],['Your core belief about the world','q12'],['What you would regret not doing','q13'],['What success feels like','q14']];
+  q2s.forEach(([label,id])=>{ const v=get(id); if(v) txt+=`${label}:\n${v}\n\n`; });
+
+  txt += `\nPART 3 — YOUR IDEA\n${div}\n\n`;
+  const q3s = [['The idea that won\'t leave you','q15'],['The problem it solves and who has it','q16'],['Why you are the right person','q17'],['Simplest version in 30 days','q18'],['What could make it fail','q19'],['Success in 12 months','q20'],['What this opens up for you','q21']];
+  q3s.forEach(([label,id])=>{ const v=get(id); if(v) txt+=`${label}:\n${v}\n\n`; });
+
+  txt += `\n${line}\nKleeOnAI Clarity Engine — kleeonai.com\n"Africa doesn't catch up. It leaps."\n`;
+
+  const blob = new Blob([txt],{type:'text/plain'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `clarity_report_${name.toLowerCase()}_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+}
+</script>
+</body>
+</html>
